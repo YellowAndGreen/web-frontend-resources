@@ -1,4 +1,11 @@
-# 尚硅谷 张天禹老师vue2笔记
+# vue2笔记
+
+## 环境安装及使用
+
+1. 首先需要安装node.js
+2. 使用`npm install -g @vue/cli`安装vue-cli 
+3. 在创建项目的目录使用`vue create name`
+4. 使用`npm run serve`运行
 
 ## 脚手架文件结构
 
@@ -31,9 +38,46 @@
 1. 使用vue inspect > output.js可以查看到Vue脚手架的默认配置。
 2. 使用vue.config.js可以对脚手架进行个性化定制，详情见：https://cli.vuejs.org/zh
 
+```
+module.exports = {
+  pages: {
+    index: {
+      //入口
+      entry: '01_src_分析脚手架/main.js',
+    },
+  },
+	lintOnSave:false, //关闭语法检查
+	//开启代理服务器（方式一）
+	/* devServer: {
+    proxy: 'http://localhost:5000'
+  }, */
+	//开启代理服务器（方式二）
+	// devServer: {
+  //   proxy: {
+  //     '/atguigu': {
+  //       target: 'http://localhost:5000',
+	// 			pathRewrite:{'^/atguigu':''},
+  //       // ws: true, //用于支持websocket
+  //       // changeOrigin: true //用于控制请求头中的host值
+  //     },
+  //     '/demo': {
+  //       target: 'http://localhost:5001',
+	// 			pathRewrite:{'^/demo':''},
+  //       // ws: true, //用于支持websocket
+  //       // changeOrigin: true //用于控制请求头中的host值
+  //     }
+  //   }
+  // }
+}
+```
+
+
+
+
+
 ## ref属性
 
-1. 被用来给元素或子组件注册引用信息（id的替代者）
+1. 被用来给元素或子组件注册引用信息（**id的替代者**）
 2. 应用在html标签上获取的是真实DOM元素，应用在组件标签上是组件实例对象（vc）
 3. 使用方式：
     1. 打标识：```<h1 ref="xxx">.....</h1>``` 或 ```<School ref="xxx"></School>```
@@ -45,9 +89,9 @@
 
 2. 传递数据：```<Demo name="xxx"/>```
 
-3. 接收数据：
+3. 接收数据   ：
 
-    1. 第一种方式（只接收）：```props:['name'] ```
+    1. 第一种方式（只接收）：```props:['name','name'] ```
 
     2. 第二种方式（限制类型）：```props:{name:String}```
 
@@ -63,7 +107,10 @@
         }
         ```
 
-    > 备注：props是只读的，Vue底层会监测你对props的修改，如果进行了修改，就会发出警告，若业务需求确实需要修改，那么请复制props的内容到data中一份，然后去修改data中的数据。
+    4.可以这样修改data中的数据：`myAge:this.age`，在初始化的时候先创建prop的age值并绑定到vc上，然后绑定到data的myAge上。
+
+>
+> 备注：props是只读的，Vue底层会监测你对props的修改，如果进行了修改，就会发出警告，若业务需求确实需要修改，那么请复制props的内容到data中一份，然后去修改data中的数据。
 
 ## mixin(混入)
 
@@ -81,8 +128,10 @@
     }
     ```
 
-    第二步使用混入：
+    第二步引入并使用混入：
 
+    ​     引入：`import {hunhe,hunhe2} from '../mixin'`
+    
     ​	全局混入：```Vue.mixin(xxx)```
     ​	局部混入：```mixins:['xxx']	```
 
@@ -111,7 +160,11 @@
     }
     ```
 
-4. 使用插件：```Vue.use()```
+4. 使用插件：```Vue.use(plugin_name)```
+
+## 样式语言
+
+使用less作为css语言`<style lang='less'></style>`
 
 ## scoped样式
 
@@ -1065,5 +1118,5 @@ module.exports = {
    1. 地址干净，美观 。
    2. 兼容性和hash模式相比略差。
    3. 应用部署上线时需要后端人员支持，解决刷新页面服务端404的问题。
-	 
+	
 	 
