@@ -171,6 +171,18 @@ module.exports = {
 1. 作用：让样式在局部生效，防止冲突。
 2. 写法：```<style scoped>```
 
+## TODO开发流程
+
+1. 分析各个组件并命名
+
+   ![image-20211031092113905](E:\All Files\Git\web-frontend-resources\vue\img\image-20211031092113905.png)
+
+2. 使用nanoid来获取唯一id值，在项目文件夹下`npm i nanoid`，用`import {nanoid} from 'nanoid'`引入，调用`nanoid`即可获得·唯一id值
+
+3. 在app中传入数据，并传给子组件（此时平级组件间传递数据困难）![image-20211031092456914](E:\All Files\Git\web-frontend-resources\vue\img\image-20211031092456914.png)
+
+
+
 ## 总结TodoList案例
 
 1. 组件化编码流程：
