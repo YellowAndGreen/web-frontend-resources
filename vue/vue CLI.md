@@ -271,7 +271,7 @@ module.exports = {
 
 1. 一种组件间通信的方式，适用于<span style="color:red">任意组件间通信</span>。
 
-2. 安装全局事件总线：
+2. 在main.js安装全局事件总线：
 
    ```js
    new Vue({
@@ -302,6 +302,8 @@ module.exports = {
 4. 最好在beforeDestroy钩子中，用$off去解绑<span style="color:red">当前组件所用到的</span>事件。
 
 ## 消息订阅与发布（pubsub）
+
+使用pubsub.js库
 
 1.   一种组件间通信的方式，适用于<span style="color:red">任意组件间通信</span>。
 
@@ -335,6 +337,8 @@ module.exports = {
 
 ## Vue封装的过度与动画
 
+第三方库：animate.css
+
 1. 作用：在插入、更新或移除 DOM元素时，在合适的时候给元素添加样式类名。
 
 2. 图示：<img src="https://img04.sogoucdn.com/app/a/100520146/5990c1dff7dc7a8fb3b34b4462bd0105" style="width:60%" />
@@ -361,6 +365,10 @@ module.exports = {
       ```
 
    3. 备注：若有多个元素需要过度，则需要使用：```<transition-group>```，且每个元素都要指定```key```值。
+   
+   4. 若有name属性，则将css中类名的v改为name，如：hello-enter
+   
+      
 
 ## vue脚手架配置代理
 
