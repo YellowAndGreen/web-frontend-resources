@@ -779,11 +779,13 @@ Object.defineProperty(person,'age',{
 
 ​            (1).对象中后追加的属性，Vue默认不做响应式处理
 
-​            (2).如需给后添加的属性做响应式，请使用如下API：
+​            (2).***已经废弃***！！！！如需给后添加的属性做响应式，请使用如下API：
 
 ​                    Vue.set(target，propertyName/index，value) 或 
 
 ​                    vm.$set(target，propertyName/index，value)
+
+​			使用reactive()包裹对象即可开启响应式！！！
 
   \3. 如何监测数组中的数据？
 
@@ -1170,7 +1172,7 @@ Vue.directive(指令名,配置对象) 或  Vue.directive(指令名,回调函数)
 
 ​    1.mounted: 发送ajax请求、启动定时器、绑定自定义事件、订阅消息等【初始化操作】。
 
-​    2.beforeDestroy: 清除定时器、解绑自定义事件、取消订阅消息等【收尾工作】。
+​    2.beforeDestroy: 清除定时器、解绑自定义事件、取消订阅消息等【收尾工作】。***已经改名为beforeUnmount！！！***
 
 
 

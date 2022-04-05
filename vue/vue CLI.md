@@ -171,7 +171,21 @@ module.exports = {
 1. 作用：让样式在局部生效，防止冲突。
 2. 写法：```<style scoped>```
 
+## TODO开发流程
+
+1. 分析各个组件并命名
+
+   ![image-20211031092113905](E:\All Files\Git\web-frontend-resources\vue\img\image-20211031092113905.png)
+
+2. 使用nanoid来获取唯一id值，在项目文件夹下`npm i nanoid`，用`import {nanoid} from 'nanoid'`引入，调用`nanoid`即可获得·唯一id值
+
+3. 在app中传入数据，并传给子组件（此时平级组件间传递数据困难）![image-20211031092456914](E:\All Files\Git\web-frontend-resources\vue\img\image-20211031092456914.png)
+
+
+
 ## 总结TodoList案例
+
+​			1. 数据在哪里，操作数据的方法就在哪里
 
 1. 组件化编码流程：
 
@@ -241,7 +255,7 @@ module.exports = {
         <Demo ref="demo"/>
         ......
         mounted(){
-           this.$refs.xxx.$on('atguigu',this.test)
+        //绑定事件用$on()   this.$refs.xxx.$on('atguigu',this.test)
         }
         ```
 
@@ -249,7 +263,7 @@ module.exports = {
 
 4. 触发自定义事件：```this.$emit('atguigu',数据)```		
 
-5. 解绑自定义事件```this.$off('atguigu')```
+5. 解绑自定义事件```this.$off('atguigu')```，解绑多个`this.$off(['atguigu','at2'])`
 
 6. 组件上也可以绑定原生DOM事件，需要使用```native```修饰符。
 
@@ -259,7 +273,7 @@ module.exports = {
 
 1. 一种组件间通信的方式，适用于<span style="color:red">任意组件间通信</span>。
 
-2. 安装全局事件总线：
+2. 在main.js安装全局事件总线：
 
    ```js
    new Vue({
@@ -290,6 +304,8 @@ module.exports = {
 4. 最好在beforeDestroy钩子中，用$off去解绑<span style="color:red">当前组件所用到的</span>事件。
 
 ## 消息订阅与发布（pubsub）
+
+使用pubsub.js库
 
 1.   一种组件间通信的方式，适用于<span style="color:red">任意组件间通信</span>。
 
@@ -323,6 +339,8 @@ module.exports = {
 
 ## Vue封装的过度与动画
 
+第三方库：animate.css
+
 1. 作用：在插入、更新或移除 DOM元素时，在合适的时候给元素添加样式类名。
 
 2. 图示：<img src="https://img04.sogoucdn.com/app/a/100520146/5990c1dff7dc7a8fb3b34b4462bd0105" style="width:60%" />
@@ -349,6 +367,10 @@ module.exports = {
       ```
 
    3. 备注：若有多个元素需要过度，则需要使用：```<transition-group>```，且每个元素都要指定```key```值。
+   
+   4. 若有name属性，则将css中类名的v改为name，如：hello-enter
+   
+      
 
 ## vue脚手架配置代理
 
@@ -379,7 +401,7 @@ module.exports = {
       '/api1': {// 匹配所有以 '/api1'开头的请求路径
         target: 'http://localhost:5000',// 代理目标的基础路径
         changeOrigin: true,
-        pathRewrite: {'^/api1': ''}
+        pathRewrite: {'^/api1': ''}  // 在向数据库请求时去掉api1后缀
       },
       '/api2': {// 匹配所有以 '/api2'开头的请求路径
         target: 'http://localhost:5001',// 代理目标的基础路径
