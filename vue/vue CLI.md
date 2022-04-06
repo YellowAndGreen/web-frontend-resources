@@ -48,6 +48,7 @@ module.exports = {
   },
 	lintOnSave:false, //关闭语法检查
 	//开启代理服务器（方式一）
+	//这里的端口为api的端口，在vue中请求为vue地址的端口
 	/* devServer: {
     proxy: 'http://localhost:5000'
   }, */
@@ -406,7 +407,7 @@ module.exports = {
       '/api2': {// 匹配所有以 '/api2'开头的请求路径
         target: 'http://localhost:5001',// 代理目标的基础路径
         changeOrigin: true,
-        pathRewrite: {'^/api2': ''}
+        pathRewrite: {'^/api2': ''}  //将api2 
       }
     }
   }
@@ -522,6 +523,10 @@ module.exports = {
 ### 1.概念
 
 ​		在Vue中实现集中式状态（数据）管理的一个Vue插件，对vue应用中多个组件的共享状态进行集中式的管理（读/写），也是一种组件间通信的方式，且适用于任意组件间通信。
+
+​		组件将任务分发给Actions，由Action提交改变动作和数据给mutations改变状态。组件可以直接提交动作给Mutations。
+
+![image-20220406201822363](E:\All Files\Git\web-frontend-resources\vue\img\image-20220406201822363.png)
 
 ### 2.何时使用？
 
