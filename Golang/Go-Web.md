@@ -1003,3 +1003,11 @@ func main() {
 
 ```
 
+### 使用RabbitMq
+
+1. docker安装：`docker pull rabbitmq:3.10-rc-management`
+
+> 只有management才有web界面
+
+2. 运行：` docker run -d --hostname my-rabbit --name rabbit0 -p 8080:15672 rabbitmq:3.10-rc-management`
+

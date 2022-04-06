@@ -138,3 +138,217 @@ func main() {
 
 
 
+## 字符串
+
+### strings
+
+```go
+package main
+
+import (
+	"fmt"
+	s "strings"
+)
+
+var p = fmt.Println
+
+func main() {
+
+	p("Contains:  ", s.Contains("test", "es"))
+	p("Count:     ", s.Count("test", "t"))
+	p("HasPrefix: ", s.HasPrefix("test", "te"))
+	p("HasSuffix: ", s.HasSuffix("test", "st"))
+	p("Index:     ", s.Index("test", "e"))
+	p("Join:      ", s.Join([]string{"a", "b"}, "-"))
+	p("Repeat:    ", s.Repeat("a", 5))
+	p("Replace:   ", s.Replace("foo", "o", "0", -1))
+	p("Replace:   ", s.Replace("foo", "o", "0", 1))
+	p("Split:     ", s.Split("a-b-c-d-e", "-"))
+	p("ToLower:   ", s.ToLower("TEST"))
+	p("ToUpper:   ", s.ToUpper("test"))
+	p("Len: ", len("hello"))
+	p("Char:", "hello"[1])
+}
+
+```
+
+### regexp
+
+```go
+package main
+
+import (
+    "bytes"
+    "fmt"
+    "regexp"
+)
+
+func main() {
+	// 返回是否找到
+    match, _ := regexp.MatchString("p([a-z]+)ch", "peach")
+    fmt.Println(match)
+
+    r, _ := regexp.Compile("p([a-z]+)ch")
+
+    fmt.Println(r.MatchString("peach"))
+	// 返回匹配结果
+    fmt.Println(r.FindString("peach punch"))
+	// 返回匹配索引
+    fmt.Println("idx:", r.FindStringIndex("peach punch"))
+	// Submatch 返回完全匹配和局部匹配的字符串。 例如，这里会返回匹配 p([a-z]+)ch 和 ([a-z]+) 的信息。
+    fmt.Println(r.FindStringSubmatch("peach punch"))
+	
+    fmt.Println(r.FindStringSubmatchIndex("peach punch"))
+	// 带 All 的这些函数返回全部的匹配项
+    fmt.Println(r.FindAllString("peach punch pinch", -1))
+
+    fmt.Println("all:", r.FindAllStringSubmatchIndex(
+        "peach punch pinch", -1))
+
+    fmt.Println(r.FindAllString("peach punch pinch", 2))
+
+    fmt.Println(r.Match([]byte("peach")))
+
+    r = regexp.MustCompile("p([a-z]+)ch")
+    fmt.Println("regexp:", r)
+
+    fmt.Println(r.ReplaceAllString("a peach", "<fruit>"))
+
+    in := []byte("a peach")
+    out := r.ReplaceAllFunc(in, bytes.ToUpper)
+    fmt.Println(string(out))
+}
+```
+
+
+
+## 时间
+
+1. 可使用time.Minute作为时间块传入，比如time.sleep和time.Sub中
+
+### 基本
+
+```go
+package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func main() {
+    p := fmt.Println
+
+    now := time.Now()
+    p(now)
+	//创建时间对象
+    then := time.Date(
+        2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
+    p(then)
+
+    p(then.Year())
+    p(then.Month())
+    p(then.Day())
+    p(then.Hour())
+    p(then.Minute())
+    p(then.Second())
+    p(then.Nanosecond())
+    p(then.Location())
+
+    p(then.Weekday())
+	//时间比较操作
+    p(then.Before(now))
+    p(then.After(now))
+    p(then.Equal(now))
+	//时间加减法
+    diff := now.Sub(then)
+    p(diff)
+
+    p(diff.Hours())
+    p(diff.Minutes())
+    p(diff.Seconds())
+    p(diff.Nanoseconds())
+	//时间加法，只能为时区对象
+    p(then.Add(diff))
+    p(then.Add(-diff))
+}
+```
+
+### 时间的格式化和解析
+
+1. 时间对象的字符串格式化：`t.Format(time.RFC3339)`
+
+2. 将字符串解析为时间对象：
+
+   ```go
+   time.Parse(time.RFC3339,"2012-11-01T22:08:41+00:00")
+   ```
+
+3. 以指定的格式进行格式化和解析
+
+   ```go
+   t = time.Now()
+   
+   p(t.Format("3:04PM"))
+   p(t.Format("Mon Jan _2 15:04:05 2006"))
+   p(t.Format("2006-01-02T15:04:05.999999-07:00"))
+   form := "3 04 PM"
+   t2, e := time.Parse(form, "8 41 PM")
+   ```
+
+
+
+## 数字
+
+### 随机数
+
+1. 使用`rand.Intn(100)`生成0-100的随机整数
+2. 使用`rand.Float64()`生成0-1的随机浮点数
+3. 指定随机数种子：
+
+```go
+s1 := rand.NewSource(time.Now().UnixNano())
+r1 := rand.New(s1)
+r1.Intn(100)
+```
+
+
+
+### 字符串转数字
+
+1. 第二个参数是是否自动识别是什么进制，第三个参数是数字bits
+
+```go
+package main
+
+import (
+    "fmt"
+    "strconv"
+)
+
+func main() {
+
+    f, _ := strconv.ParseFloat("1.234", 64)
+    fmt.Println(f)
+
+    i, _ := strconv.ParseInt("123", 0, 64)
+    fmt.Println(i)
+
+    d, _ := strconv.ParseInt("0x1c8", 0, 64)
+    fmt.Println(d)
+
+    u, _ := strconv.ParseUint("789", 0, 64)
+    fmt.Println(u)
+
+    k, _ := strconv.Atoi("135")
+    fmt.Println(k)
+
+    _, e := strconv.Atoi("wat")
+    fmt.Println(e)
+}
+```
+
+
+
+
+
