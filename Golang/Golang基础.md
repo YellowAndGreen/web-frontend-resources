@@ -350,5 +350,110 @@ func main() {
 
 
 
+## 文件
 
+### 读文件
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+)
+
+// 便捷检查错误的函数
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func main() {
+	filePath := "C:\\Users\\Administrator\\Desktop\\a.txt"
+	// 打开文件并读入内存中
+	dat, err := os.ReadFile(filePath)
+	check(err)
+	fmt.Print(string(dat))
+
+	// 仅打开文件，还没读入
+	f, err := os.Open(filePath)
+	check(err)
+    
+    // 打开文件后，一个习惯性的操作是：立即使用 defer 调用文件的 Close。
+	defer f.Close()
+    
+	// 读入文件，每次仅读入五个字节
+	b1 := make([]byte, 5)
+	n1, err := f.Read(b1)
+	check(err)
+	fmt.Printf("%d bytes: %s\n", n1, string(b1[:n1]))
+	// 从第二个参数位置向右偏移第一个参数个字节
+	o2, err := f.Seek(6, 0)
+	check(err)
+	fmt.Printf("Seek func:" + strconv.FormatInt(o2, 10) + "\n")
+
+	// bufio 包实现了一个缓冲读取器，这可能有助于提高许多小读操作的效率
+	r4 := bufio.NewReader(f)
+	
+	// 从第五个字节读取
+	b4, err := r4.Peek(5)
+	check(err)
+	fmt.Printf("5 bytes: %s\n", string(b4))
+}
+```
+
+
+
+### 写文件
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func main() {
+	// 写入到一个文件
+	d1 := []byte("hello\ngo\n")
+	err := os.WriteFile("C:\\Users\\Administrator\\Desktop\\b.txt", d1, 0644)
+	check(err)
+	// 对于更细粒度的写入，先打开一个文件。
+	f, err := os.Create("C:\\Users\\Administrator\\Desktop\\b.txt")
+	check(err)
+
+	// 打开文件后，一个习惯性的操作是：立即使用 defer 调用文件的 Close。
+	defer f.Close()
+	// 以字节写入并返回写入的字节数
+	d2 := []byte{115, 111, 109, 101, 10}
+	n2, err := f.Write(d2)
+	check(err)
+	fmt.Printf("wrote %d bytes\n", n2)
+
+	// 写入字符串并返回写入的字节数
+	n3, err := f.WriteString("writes\n")
+	check(err)
+	fmt.Printf("wrote %d bytes\n", n3)
+
+	f.Sync()
+	//
+	//w := bufio.NewWriter(f)
+	//n4, err := w.WriteString("buffered\n")
+	//check(err)
+	//fmt.Printf("wrote %d bytes\n", n4)
+	//
+	//w.Flush()
+
+}
+```
 

@@ -776,20 +776,32 @@ module.exports = {
 ### 1.基本使用
 
 1. 安装vue-router，命令：```npm i vue-router```
+2. main.js中声明使用该router：
 
-2. 应用插件：```Vue.use(VueRouter)```
+```js
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router'
+const app = createApp(App)
 
-3. 编写router配置项:
+app.use(router)
+app.mount('#app')
+```
+
+
+
+1. router/index.js中编写router配置项:
 
    ```js
-   //引入VueRouter
-   import VueRouter from 'vue-router'
-   //引入Luyou 组件
+   // 该文件专门用于创建整个应用的路由器
+   import {createRouter,createWebHashHistory} from 'vue-router'
+   //引入组件
    import About from '../components/About'
    import Home from '../components/Home'
    
-   //创建router实例对象，去管理一组一组的路由规则
-   const router = new VueRouter({
+   //创建并暴露一个路由器
+   export default createRouter({
+   	history: createWebHashHistory(),
    	routes:[
    		{
    			path:'/about',
@@ -802,17 +814,15 @@ module.exports = {
    	]
    })
    
-   //暴露router
-   export default router
    ```
 
-4. 实现切换（active-class可配置高亮样式）
+2. 实现切换（active-class可配置高亮样式）
 
    ```vue
    <router-link active-class="active" to="/about">About</router-link>
    ```
 
-5. 指定展示位置
+3. 指定展示位置
 
    ```vue
    <router-view></router-view>
@@ -1027,7 +1037,7 @@ module.exports = {
 2. 具体编码：
 
    ```js
-   //$router的两个API
+   //$router跳转的两个API
    this.$router.push({
    	name:'xiangqing',
    		params:{
@@ -1043,16 +1053,22 @@ module.exports = {
    			title:xxx
    		}
    })
+   
+   //控制历史记录
    this.$router.forward() //前进
    this.$router.back() //后退
-   this.$router.go() //可前进也可后退
+   this.$router.go(num) //可前进也可后退，num为正时往前跳num次
    ```
 
 ### 10.缓存路由组件
 
 1. 作用：让不展示的路由组件保持挂载，不被销毁。
 
-2. 具体编码：
+2. 缓存单个组件`include="News"`
+
+3. 缓存多个组件`:include="['News','message']"`
+
+4. 具体编码：
 
    ```vue
    <keep-alive include="News"> 
@@ -1064,8 +1080,8 @@ module.exports = {
 
 1. 作用：路由组件所独有的两个钩子，用于捕获路由组件的激活状态。
 2. 具体名字：
-   1. ```activated```路由组件被激活时触发。
-   2. ```deactivated```路由组件失活时触发。
+   1. ```activated```路由组件被激活时（正在使用时）触发。
+   2. ```deactivated```路由组件失活时（不使用时）触发。
 
 ### 12.路由守卫
 
@@ -1076,6 +1092,15 @@ module.exports = {
 3. 全局守卫:
 
    ```js
+   //router配置，所有需要验证的信息放在meta 
+   children:[
+       {
+           name:'xiangqing',
+           path:'detail',
+           component:Detail,
+           meta:{isAuth:true,title:'详情'}  
+           ]
+   
    //全局前置守卫：初始化时执行、每次路由切换前执行
    router.beforeEach((to,from,next)=>{
    	console.log('beforeEach',to,from)
