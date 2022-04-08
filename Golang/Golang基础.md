@@ -413,6 +413,7 @@ func main() {
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
@@ -444,16 +445,46 @@ func main() {
 	n3, err := f.WriteString("writes\n")
 	check(err)
 	fmt.Printf("wrote %d bytes\n", n3)
-
+	// 提交文件更改，从内存写入磁盘
 	f.Sync()
-	//
-	//w := bufio.NewWriter(f)
-	//n4, err := w.WriteString("buffered\n")
-	//check(err)
-	//fmt.Printf("wrote %d bytes\n", n4)
-	//
-	//w.Flush()
+	
+	// 带缓冲的 Writer
+	w := bufio.NewWriter(f)
+	n4, err := w.WriteString("buffered\n")
+	check(err)
+	fmt.Printf("wrote %d bytes\n", n4)
+	// 使用底层io写入
+	w.Flush()
+}
+```
 
+### 行过滤器
+
+*行过滤器（line filter）* 是一种常见的程序类型， 它读取 stdin 上的输入，对其进行处理，然后将处理结果打印到 stdout。 `grep` 和 `sed` 就是常见的行过滤器。
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+)
+
+func main() {
+	// 使用NewScanner接收每行的标准输入
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for scanner.Scan() {
+		ucl := strings.ToUpper(scanner.Text())
+		fmt.Println(ucl)
+	}
+	// 检查 Scan 的错误。 文件结束符（EOF）是可以接受的，它不会被 Scan 当作一个错误。
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(1)
+	}
 }
 ```
 
