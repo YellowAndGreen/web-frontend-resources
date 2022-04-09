@@ -741,6 +741,8 @@ func main() {
 
 驱动：`gorm.io/driver/sqlite`
 
+**注意**：字段名必须是大写的才是可导出的！！！小写字段是访问不到的！！！
+
 ```go
 package main
 
@@ -751,8 +753,8 @@ import (
 )
 
 type Product struct {
-	price int
-	name  string
+	Price int
+	Name  string
 }
 
 type User struct {
@@ -774,6 +776,13 @@ func initdb() {
 	db.Create(&user)
 	//更新数据
 	db.Model(&user).Update("age", 30)
+    
+    // 也可通过save更新
+    db.First(&user)
+    user.Name = "jinzhu 2"
+    user.Age = 100
+    db.Save(&user)
+    
 	//忽略某个参数的更新（不更新他），并更新多个参数
 	db.Model(&user).Omit("age").Updates(map[string]interface{}{"Name": "bar2", "age": 30})
 
@@ -1010,3 +1019,6 @@ func main() {
 
 2. 运行：` docker run -d --hostname my-rabbit --name rabbit0 -p 8080:15672 rabbitmq:3.10-rc-management`
 
+### 使用postman测试
+
+传输json数据要用body里的raw的json格式，否则有可能不行
