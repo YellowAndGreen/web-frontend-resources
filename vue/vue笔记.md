@@ -1585,3 +1585,37 @@ render是将组件渲染到模版文件上去，h是render函数传入的一个�
 
 
 
+### 使用PWA
+
+```
+// 加入pwa功能
+vue add pwa
+
+// 若pwa无法使用则更新
+vue update
+// 全局安装服务器
+npm install –g browser-sync
+
+// cd到build后的dist文件，在浏览器加入应用即可
+browser-sync
+```
+
+
+
+### 使用ElementPlus
+
+```js
+// npm install element-plus
+// main.js
+import { createApp } from 'vue'
+import App from './App.vue'
+import './registerServiceWorker'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+
+
+const app = createApp(App)
+app.use(ElementPlus)
+app.mount('#app')
+```
+
