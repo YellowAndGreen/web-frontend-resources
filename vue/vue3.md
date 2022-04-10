@@ -129,10 +129,16 @@ npm run dev
 
 - 作用: 定义一个<strong style="color:#DD5145">对象类型</strong>的响应式数据（基本类型不要用它，要用```ref```函数）
 - 语法：```const 代理对象= reactive(源对象)```接收一个对象（或数组），返回一个<strong style="color:#DD5145">代理对象（Proxy的实例对象，简称proxy对象）</strong>
+- 注意：
+  - **可以直接通过下标修改数组**
+  - **对象取值不需要用value**
+  - **可以直接新增属性、删除属性**，vm能够检测到并更新页面
 - reactive定义的响应式数据是“深层次的”。
 - 内部基于 ES6 的 Proxy 实现，通过代理对象操作源对象内部数据进行操作。
 
 ## 4.Vue3.0中的响应式原理
+
+> 普通数据与响应式数据的区别：普通数据在变化时页面vue不会检测到并更新页面，而响应式可以
 
 ### vue2.x的响应式
 
@@ -194,17 +200,17 @@ npm run dev
    -  ref定义的数据：操作数据<strong style="color:#DD5145">需要</strong>```.value```，读取数据时模板中直接读取<strong style="color:#DD5145">不需要</strong>```.value```。
    -  reactive定义的数据：操作数据与读取数据：<strong style="color:#DD5145">均不需要</strong>```.value```。
 
-## 6.setup的两个注意点
+## 6.setup的注意点
 
 - setup执行的时机
   - 在beforeCreate之前执行一次，this是undefined。
   
 - setup的参数
-  - props：值为对象，包含：组件外部传递过来，且组件内部声明接收了的属性。
+  - **props：值为对象，包含：组件外部传递过来，且组件内部声明接收了的属性。**
   - context：上下文对象
     - attrs: 值为对象，包含：组件外部传递过来，但没有在props配置中声明的属性, 相当于 ```this.$attrs```。
     - slots: 收到的插槽内容, 相当于 ```this.$slots```。
-    - emit: 分发自定义事件的函数, 相当于 ```this.$emit```。
+    - emit: 分发自定义事件的函数, 相当于 ```this.$emit```。对子组件定义的事件必须在子组件中定义`emits:['xxx',]`
 
 
 ## 7.计算属性与监视
@@ -304,43 +310,9 @@ npm run dev
 
 ## 8.生命周期
 
+> Vue3的生命周期钩子均可用API形式写在setup里（配置项写法也可用）
+
 <div style="border:1px solid black;width:380px;float:left;margin-right:20px;"><strong>vue2.x的生命周期</strong><img src="https://cn.vuejs.org/images/lifecycle.png" alt="lifecycle_2" style="zoom:33%;width:1200px" /></div><div style="border:1px solid black;width:510px;height:985px;float:left"><strong>vue3.0的生命周期</strong><img src="https://v3.cn.vuejs.org/images/lifecycle.svg" alt="lifecycle_2" style="zoom:33%;width:2500px" /></div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 1
 
@@ -357,19 +329,93 @@ npm run dev
   - `beforeUnmount` ==>`onBeforeUnmount`
   - `unmounted` =====>`onUnmounted`
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 9.自定义hook函数
 
 - 什么是hook？—— 本质是一个函数，把setup函数中使用的Composition API进行了封装。
 
 - 类似于vue2.x中的mixin。
 
-- 自定义hook的优势: 复用代码, 让setup中的逻辑更清楚易懂。
+- 一般新建一个src/hooks文件夹
+
+  > 自定义hook的优势: 复用代码, 让setup中的逻辑更清楚易懂。
 
 
 
 ## 10.toRef
 
-- 作用：创建一个 ref 对象，其value值指向另一个对象中的某个属性。
+> 避免重复嵌套使用以及暴露出所有的属性
+
+- **作用：创建一个 ref 对象，其value值指向另一个对象中的某个属性。**
 - 语法：```const name = toRef(person,'name')```
 - 应用:   要将响应式对象中的某个属性单独提供给外部使用时。
 
@@ -382,17 +428,25 @@ npm run dev
 ## 1.shallowReactive 与 shallowRef
 
 - shallowReactive：只处理对象最外层属性的响应式（浅响应式）。
+
 - shallowRef：只处理基本数据类型的响应式, 不进行对象的响应式处理。
 
 - 什么时候使用?
-  -  如果有一个对象数据，结构比较深, 但变化时只是外层属性变化 ===> shallowReactive。
-  -  如果有一个对象数据，后续功能不会修改该对象中的属性，而是生新的对象来替换 ===> shallowRef。
+
+  > 减少递归开销
+
+  - 如果有一个对象数据，结构比较深, 但变化时只是外层属性变化 ===> shallowReactive。
+  - 如果有一个对象数据，后续功能不会修改该对象中的属性，而是生新的对象来替换 ===> shallowRef。
 
 ## 2.readonly 与 shallowReadonly
 
+> 应用场景: 不希望数据被修改时。
+
 - readonly: 让一个响应式数据变为只读的（深只读）。
+
 - shallowReadonly：让一个响应式数据变为只读的（浅只读）。
-- 应用场景: 不希望数据被修改时。
+
+  
 
 ## 3.toRaw 与 markRaw
 
@@ -458,7 +512,7 @@ npm run dev
 
 <img src="https://v3.cn.vuejs.org/images/components_provide.png" style="width:300px" />
 
-- 作用：实现<strong style="color:#DD5145">祖与后代组件间</strong>通信
+>  作用：实现<strong style="color:#DD5145">祖与后代组件间</strong>通信
 
 - 套路：父组件有一个 `provide` 选项来提供数据，后代组件有一个 `inject` 选项来开始使用这些数据
 
@@ -530,6 +584,39 @@ npm run dev
 <div style="width:430px;height:340px;overflow:hidden;float:left">
     <img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6cc55165c0e34069a75fe36f8712eb80~tplv-k3u1fbpfcp-watermark.image"style="height:360px"/>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -695,3 +782,4 @@ npm run dev
   > 过滤器虽然这看起来很方便，但它需要一个自定义语法，打破大括号内表达式是 “只是 JavaScript” 的假设，这不仅有学习成本，而且有实现成本！建议用方法调用或计算属性去替换过滤器。
 
 - ......
+

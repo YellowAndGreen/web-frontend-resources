@@ -1619,3 +1619,16 @@ app.use(ElementPlus)
 app.mount('#app')
 ```
 
+
+
+### 使用VuePress
+
+```bash
+// 运行测试服务器
+npm run docs:dev
+// 构建静态文件
+npm run docs:build
+```
+
+
+

@@ -131,3 +131,35 @@ character_set_server = utf8
 docker run  -p 6379:6379 --name myr3 --privileged=true -v /app/redis/redis.conf:/etc/redis/redis.conf -v /app/redis/data:/data -d redis:6.0.8 redis-server /etc/redis/redis.conf
 ```
 
+
+
+## 修改Windows下的默认镜像存放路径
+
+1. 删除所有数据：`purge data`
+
+2. `wsl -l -v --all`查询状态，必须都关闭
+
+3. 导出wsl子系统镜像，第二个路径是要放的路径：
+
+   ```bash
+   wsl --export docker-desktop D:\Docker\docker-desktop.tar
+   wsl --export docker-desktop-data D:\Docker\docker-desktop-data.tar
+   ```
+   
+4. 删除现有的wsl子系统：
+
+   ```bash
+   wsl --unregister docker-desktop
+   wsl --unregister docker-desktop-data
+   ```
+
+5. 重新创建wsl子系统：
+
+   ```bash
+   wsl --import docker-desktop D:\Docker\docker-desktop D:\Docker\docker-desktop.tar --version 2
+   
+   wsl --import docker-desktop-data D:\Docker\docker-desktop-data D:\Docker\docker-desktop-data.tar --version 2
+   ```
+
+   
+

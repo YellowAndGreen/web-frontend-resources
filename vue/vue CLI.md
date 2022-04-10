@@ -458,7 +458,7 @@ module.exports = {
                   <template slot="center">
                     <div>html结构1</div>
                   </template>
-      
+      			// Vue3中只有v-slot能用！
                   <template v-slot:footer>
                      <div>html结构2</div>
                   </template>
