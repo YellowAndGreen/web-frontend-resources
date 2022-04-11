@@ -24,9 +24,19 @@
 }
 ```
 
+### 常用命令
 
+1. `启动docker： systemctl start docker`
+2. `停止docker： systemctl stop docker`
+3. `重启docker： systemctl restart docker`
 
 ## 镜像命令
+
+1. 显示所有镜像：`docker images`
+2. 下载镜像：`docker pull 镜像名字[:TAG]`
+3. 查看镜像/容器/数据卷所占的空间：`docker system df `
+4. 删除镜像：`docker rmi 某个XXX镜像名字ID`
+5. 删除全部镜像：`docker rmi -f $(docker images -qa)`
 
 ### 扩展现有镜像
 
@@ -34,6 +44,34 @@
 2. docker commit -m="提交的描述信息" -a="作者" 容器ID 要创建的目标镜像名:[标签名]
 
 ## 容器命令
+
+### 容器运行
+
+1. 创建容器并运行：`docker run [OPTIONS] IMAGE [COMMAND] [ARG...]`
+
+>  OPTIONS说明（常用）：
+>
+> 有些是一个减号，有些是两个减号 --name="容器新名字"    为容器指定一个名称；
+>
+> -d: 后台运行容器并返回容器ID，也即启动守护式容器(后台运行)； 
+>
+> -i：以交互模式运行容器，通常与 -t 同时使用；
+>
+> -t：为容器重新分配一个伪输入终端，通常与 -i 同时使用；也即启动交互式容器(前台有伪终端，等待交互)； 
+>
+> -P: 随机端口映射，大写P-p: 指定端口映射，小写p
+
+例如：`docker run -it -p 9000:9000 --name test ubuntu /bin/bash`
+
+2. 列出所有的容器：`docker ps -a`，不加`a`只显示运行的容器
+3. 在容器命令行退出容器
+   1. 退出并停止容器：`exit`
+   2. 退出不停止容器：`ctrl + p q`
+4. 停止容器：`docker stop 容器ID或者容器名`
+5. 强制停止容器：`docker kill 容器ID或容器名`
+6. 启动已经退出的容器：`docker start 容器ID或者容器名`
+7. 重启容器：`docker restart 容器ID或者容器名`
+8. 进入正在运行的容器并以命令行交互：`docker exec -it 容器ID /bin/bash`
 
 ### 主机和容器的文件拷贝
 
@@ -89,7 +127,131 @@ CMD echo "success--------------ok"
 CMD /bin/bash
 ```
 
+## Docker Compose
 
+Docker-Compose是Docker官方的开源项目，负责实现对Docker容器集群的快速编排。
+
+### **Compose**常用命令
+
+```bash
+docker-compose -h              # 查看帮助
+
+docker-compose up              # 启动所有docker-compose服务
+
+docker-compose up -d             # 启动所有docker-compose服务并后台运行
+
+docker-compose down             # 停止并删除容器、网络、卷、镜像。
+
+docker-compose exec  yml里面的服务id         # 进入容器实例内部 docker-compose exec docker-compose.yml文件中写的服务id /bin/bash
+
+docker-compose ps            # 展示当前docker-compose编排过的运行的所有容器
+
+docker-compose top           # 展示当前docker-compose编排过的容器进程
+
+docker-compose logs  yml里面的服务id   # 查看容器输出日志
+
+docker-compose config   # 检查配置
+
+docker-compose config -q # 检查配置，有问题才有输出
+
+docker-compose restart  # 重启服务
+
+docker-compose start   # 启动服务
+
+docker-compose stop    # 停止服务
+```
+
+
+
+### docker-compose文件
+
+```yaml
+version: "3"
+ 
+
+services:
+  microService:
+    image: zzyy_docker:1.6
+    container_name: ms01
+    ports:
+      - "6001:6001"
+    volumes:
+      - /app/microService:/data
+    networks: 
+      - atguigu_net 
+    depends_on: 
+      - redis
+      - mysql
+  redis:
+    image: redis:6.0.8
+    ports:
+      - "6379:6379"
+    volumes:
+      - /app/redis/redis.conf:/etc/redis/redis.conf
+      - /app/redis/data:/data
+    networks: 
+      - atguigu_net
+    command: redis-server /etc/redis/redis.conf
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: '123456'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+      MYSQL_DATABASE: 'db2021'
+      MYSQL_USER: 'zzyy'
+      MYSQL_PASSWORD: 'zzyy123'
+    ports:
+       - "3306:3306"
+    volumes:
+       - /app/mysql/db:/var/lib/mysql
+       - /app/mysql/conf/my.cnf:/etc/my.cnf
+       - /app/mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - atguigu_net
+    command: --default-authentication-plugin=mysql_native_password #解决外部无法访问
+    # 相当于创建 
+networks: 
+   atguigu_net: 
+```
+
+
+
+## 网络
+
+1.  查看所有网络：`docker network ls`
+
+2. 查看网络详情：`docker network inspect  XXX网络名字`
+
+3. 创建自定义网络：`docker network create <workname>`
+
+   ```bash
+   // 指定这个网络后使用这个网络的容器间可以通过容器名通信
+   docker run -d -p 8081:8080 --network zzyy_network  --name tomcat81 billygoo/tomcat8-jdk8
+   ```
+
+###  网络模式
+
+默认使用的是bridge模式的网络
+
+1. bridge模式：使用--network  bridge指定，默认使用docker0
+
+> bridge模式会为每个容器创建虚拟的ip和端口，类似于NAT
+
+2. host模式：使用--network host指定
+
+> host模式使用主机自身的ip和端口，容器内服务的端口就是主机端口访问地址
+>
+> **不需要指定端口号**
+
+3. none模式：使用--network none指定
+
+> 不为Docker容器进行任何网络配置，需要自己配置
+
+4. container模式：使用--network container:NAME或者容器ID指定
+
+> 新创建的容器不会创建自己的网卡，配置自己的IP，而是和一个指定的容器共享IP、端口范围等。
+>
+> **由于多个容器用一个IP，所以容器内部的端口不能冲突！！！**
 
 ## 常用安装
 
