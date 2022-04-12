@@ -1173,3 +1173,94 @@ func main() {
 ### 使用postman测试
 
 传输json数据要用body里的raw的json格式，否则有可能不行
+
+
+
+### 使用MongoDB
+
+1. 安装驱动：`go get go.mongodb.org/mongo-driver/mongo`
+
+2. 连接到MongoDB
+
+```go
+package main
+
+import (
+	"context"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"log"
+)
+
+func connect() {
+	ctx := context.Background()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://admin:password@localhost:27017/test?authSource=admin"))
+	if err = client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Connected to MongoDB")
+}
+```
+
+3. 将json导入
+
+```go
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"log"
+	"os"
+	"time"
+)
+
+type Recipe struct {
+	//swagger:ignore
+
+	ID           primitive.ObjectID `json:"id" bson:"_id"`
+	Name         string             `json:"name" bson:"name"`
+	Tags         []string           `json:"tags" bson:"tags"`
+	Ingredients  []string           `json:"ingredients" bson:"ingredients"`
+	Instructions []string           `json:"instructions" bson:"instructions"`
+	PublishedAt  time.Time          `json:"publishedAt" bson:"publishedAt"`
+}
+
+func initmongodb() {
+	// 从json中读取到recipes
+	recipes := make([]Recipe, 0)
+	fmt.Print(recipes)
+	file, err := os.ReadFile("E:\\All Files\\Programmaing\\Go\\Building-Distributed-Applications-in-Gin-main\\chapter03\\recipes.json")
+
+	if err != nil {
+		panic(err)
+	}
+	_ = json.Unmarshal([]byte(file), &recipes)
+	fmt.Print(recipes)
+	ctx := context.Background()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://admin:password@localhost:27017/test?authSource=admin"))
+	if err = client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Connected to MongoDB")
+}
+	// 把切片转为数组
+	var listOfRecipes []interface{}
+	for _, recipe := range recipes {
+		listOfRecipes = append(listOfRecipes, recipe)
+	}
+	// 表名为demo
+	collection := client.Database("demo").Collection("recipes")
+	insertManyResult, err := collection.InsertMany(ctx, listOfRecipes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Inserted recipes: ", len(insertManyResult.InsertedIDs))
+```
+

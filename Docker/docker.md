@@ -295,6 +295,10 @@ docker run  -p 6379:6379 --name myr3 --privileged=true -v /app/redis/redis.conf:
 
 
 
+### MongoDB
+
+1. 下载镜像并运行：`docker run -d --name mongodb -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=password -p 27017:27017 mongo:4.4.3`
+
 ## 修改Windows下的默认镜像存放路径
 
 1. 删除所有数据：`purge data`
