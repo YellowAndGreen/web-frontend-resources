@@ -780,7 +780,7 @@ func main() {
 			"serverTime": time.Now().UTC(),
 		})
 	})
-
+	// 可以不填，默认为8080端口
 	r.Run(":8000") // Listen and serve on 0.0.0.0:8080
 }
 
@@ -886,7 +886,39 @@ func main() {
 
 ```
 
+#### 使用中间件
 
+```go
+authorized := router.Group("/")
+authorized.Use(authHandler.AuthMiddleware())
+{
+    authorized.POST("/recipes", recipesHandler.NewRecipeHandler)
+    authorized.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
+    authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
+    authorized.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
+}
+
+// gin中不需要传入handler
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.GetHeader("X-API-KEY") != os.Getenv("X_API_KEY") {
+			c.AbortWithStatus(401)
+		}
+        // 中间件任务已完成，继续handler
+		c.Next()
+	}
+}
+```
+
+
+
+#### API笔记
+
+1. `gin.H`实际上是一个创建字典变量的快捷方法
+2. `gin.Context`在处理的时候仅传入指针，然后再逐层传回并使用或修改里面的值
+3. `c.JSON(http.StatusOK, recipes)`将结构体的内容转为json格式并放入response body中
+   1. `c.BindJSON(&recipe)`将context中的信息转为结构体中的内容，`MustBind`的便捷形式
+4. `Shouldxxx`和`bindxxx`区别就是bindxxx会在head中添加400的返回信息，而Shouldxxx不会
 
 ## Gorm
 
@@ -979,6 +1011,229 @@ func main() {
 
 
 
+## API授权
+
+### JWT
+
+1. 安装：`go get github.com/dgrijalva/jwt-go`
+
+2. 验证账户密码并返回JWT签名：
+
+   ```go
+   package handlers
+   
+   import (
+   	"net/http"
+   	"os"
+   	"time"
+   	"github.com/dgrijalva/jwt-go"
+   	"github.com/gin-gonic/gin"
+   	"github.com/mlabouardy/recipes-api/models"
+   )
+   
+   type AuthHandler struct{}
+   
+   // Claims 生成签名的请求体
+   type Claims struct {
+   	Username string `json:"username"`
+   	jwt.StandardClaims
+   }
+   
+   // JWTOutput 签名的结构体
+   type JWTOutput struct {
+   	Token   string    `json:"token"`
+   	Expires time.Time `json:"expires"`
+   }
+   
+   func (handler *AuthHandler) ListRecipesHandler(c *gin.Context) {
+   	var user models.User
+   	if err := c.ShouldBindJSON(&user); err != nil {
+   		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+   		return
+   	}
+   	
+   	// 若用户名密码错误则返回
+   	if user.Username != "admin" || user.Password != "password" {
+   		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+   		return
+   	}
+   
+   	// 签名请求
+   	expirationTime := time.Now().Add(10 * time.Minute)
+   	claims := &Claims{
+   		Username: user.Username,
+   		StandardClaims: jwt.StandardClaims{
+   			ExpiresAt: expirationTime.Unix(),
+   		},
+   	}
+   	
+   	// 生成签名
+   	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+   	tokenString, err := token.SignedString(os.Getenv("JWT_SECRET"))
+   	if err != nil {
+   		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+   		return
+   	}
+   
+   	jwtOutput := JWTOutput{
+   		Token:   tokenString,
+   		Expires: expirationTime,
+   	}
+   	c.JSON(http.StatusOK, jwtOutput)
+   }
+   ```
+
+3. 检查是否授权的中间件：
+
+   ```GO
+   func (handler *AuthHandler) AuthMiddleware() gin.HandlerFunc {
+   	return func(c *gin.Context) {
+   		tokenValue := c.GetHeader("Authorization")
+   		claims := &Claims{}
+   		tkn, err := jwt.ParseWithClaims(tokenValue, claims, func(token *jwt.Token) (interface{}, error) {
+   			// JWT密码，自行设置
+   			return []byte(os.Getenv("JWT_SECRET")), nil
+   		})
+   		if err != nil {
+   			c.AbortWithStatus(http.StatusUnauthorized)
+   		}
+   		if !tkn.Valid {
+   			c.AbortWithStatus(http.StatusUnauthorized)
+   		}
+           // 中间件的任务已经完成，继续handler的任务
+   		c.Next()
+   	}
+   }
+   ```
+
+4. 刷新签名：
+
+   ```go
+   func (handler *AuthHandler) RefreshHandler(c *gin.Context) {
+       // 解析之前的签名并校验
+   	tokenValue := c.GetHeader("Authorization")
+   	claims := &Claims{}
+   	tkn, err := jwt.ParseWithClaims(tokenValue, claims, func(token *jwt.Token) (interface{}, error) {
+   		return []byte(os.Getenv("JWT_SECRET")), nil
+   	})
+   	if err != nil {
+   		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+   		return
+   	}
+   	if !tkn.Valid {
+   		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+   		return
+   	}
+   	// 生成签名
+   	if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) > 30*time.Second {
+   		c.JSON(http.StatusBadRequest, gin.H{"error": "Token is not expired yet"})
+   		return
+   	}
+   
+   	expirationTime := time.Now().Add(5 * time.Minute)
+   	claims.ExpiresAt = expirationTime.Unix()
+   	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+   	tokenString, err := token.SignedString(os.Getenv("JWT_SECRET"))
+   	if err != nil {
+   		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+   		return
+   	}
+   
+   	jwtOutput := JWTOutput{
+   		Token:   tokenString,
+   		Expires: expirationTime,
+   	}
+   	c.JSON(http.StatusOK, jwtOutput)
+   }
+   ```
+
+5. 检查授权的中间件（以session存储）：
+
+   `go get github.com/gin-contrib/sessions`
+
+   使用`redis`存储session：
+
+   ```go
+   store, _ := redisStore.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
+   router.Use(sessions.Sessions("recipes_api", store))
+   ```
+
+   ```go
+   // 检查授权
+   func (handler *AuthHandler) AuthMiddleware() gin.HandlerFunc {
+   	return func(c *gin.Context) {
+   		session := sessions.Default(c)
+   		sessionToken := session.Get("token")
+   		if sessionToken == nil {
+   			c.JSON(http.StatusForbidden, gin.H{
+   				"message": "Not logged",
+   			})
+   			c.Abort()
+   		}
+   		c.Next()
+   	}
+   }
+   ```
+
+6. 登录登出中间件（Session）：
+
+   ```go
+   // 登录
+   func (handler *AuthHandler) SignInHandler(c *gin.Context) {
+   	var user models.User
+   	if err := c.ShouldBindJSON(&user); err != nil {
+   		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+   		return
+   	}
+   
+   	h := sha256.New()
+   
+   	cur := handler.collection.FindOne(handler.ctx, bson.M{
+   		"username": user.Username,
+   		"password": string(h.Sum([]byte(user.Password))),
+   	})
+   	if cur.Err() != nil {
+   		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+   		return
+   	}
+   
+   	sessionToken := xid.New().String()
+   	session := sessions.Default(c)
+   	session.Set("username", user.Username)
+   	session.Set("token", sessionToken)
+   	session.Save()
+   
+   	c.JSON(http.StatusOK, gin.H{"message": "User signed in"})
+   }
+   
+   
+   func (handler *AuthHandler) RefreshHandler(c *gin.Context) {
+   	session := sessions.Default(c)
+   	sessionToken := session.Get("token")
+   	sessionUser := session.Get("username")
+   	if sessionToken == nil {
+   		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session cookie"})
+   		return
+   	}
+   
+   	sessionToken = xid.New().String()
+   	session.Set("username", sessionUser.(string))
+   	session.Set("token", sessionToken)
+   	session.Save()
+   
+   	c.JSON(http.StatusOK, gin.H{"message": "New session issued"})
+   }
+   
+   func (handler *AuthHandler) SignOutHandler(c *gin.Context) {
+   	session := sessions.Default(c)
+   	session.Clear()
+   	session.Save()
+   	c.JSON(http.StatusOK, gin.H{"message": "Signed out..."})
+   }
+   ```
+
+   
+
 ## 功能
 
 ### 日志
@@ -991,7 +1246,7 @@ log.Fatal(http.ListenAndServe(":8000", nil))
 
 ### JSON
 
-1. 使用```res1B, _ := json.Marshal(res1D)```将其转为可序列化(string)的对象，然后调用string即可
+1. 使用```res1B, _ := json.Marshal(res1D)```将其转为字节列表[]byte的对象，然后调用string转为字符串
 
 > 只有 `可导出` 的字段才会被 JSON 编码/解码。必须以大写字母开头的字段才是可导出的。
 
@@ -1262,5 +1517,41 @@ func initmongodb() {
 		log.Fatal(err)
 	}
 	log.Println("Inserted recipes: ", len(insertManyResult.InsertedIDs))
+```
+
+
+
+### 使用Redis
+
+1. 安装模块：`go get github.com/go-redis/redis/v8`
+2. 连接：
+
+```go
+package main
+
+import (
+	"github.com/go-redis/redis"
+)
+
+redisClient := redis.NewClient(&redis.Options{
+    Addr:     "localhost:6379",
+    Password: "",
+    DB:       0,
+})
+
+status := redisClient.Ping()
+log.Println("Redis：", status)   # PONG即为成功
+```
+
+3. 使用：
+
+```go
+// 取值
+val, err := redisClient.Get("recipes").Result()
+// 赋值，注意redis的值只能是字符串
+data, _ := json.Marshal(recipes)
+handler.redisClient.Set("recipes", string(data), 0)
+// 删除
+redisClient.Del("recipes")
 ```
 

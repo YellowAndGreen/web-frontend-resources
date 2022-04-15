@@ -296,7 +296,13 @@ func main() {
    t2, e := time.Parse(form, "8 41 PM")
    ```
 
+4. 使用unix时间：
 
+```go
+time.Now().Unix()
+```
+
+> Unix returns t as a Unix time, the number of seconds elapsed since January 1, 1970 UTC. 
 
 ## 数字
 
