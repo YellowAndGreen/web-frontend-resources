@@ -167,51 +167,96 @@ docker-compose stop    # 停止服务
 
 ```yaml
 version: "3"
- 
+
+networks: # 使用自定义网络，容器之间的IP可以通过容器名获取
+  anki_network:
+    driver: bridge
 
 services:
-  microService:
-    image: zzyy_docker:1.6
-    container_name: ms01
-    ports:
-      - "6001:6001"
-    volumes:
-      - /app/microService:/data
-    networks: 
-      - atguigu_net 
-    depends_on: 
-      - redis
-      - mysql
-  redis:
-    image: redis:6.0.8
-    ports:
-      - "6379:6379"
-    volumes:
-      - /app/redis/redis.conf:/etc/redis/redis.conf
-      - /app/redis/data:/data
-    networks: 
-      - atguigu_net
-    command: redis-server /etc/redis/redis.conf
-  mysql:
-    image: mysql:5.7
-    environment:
-      MYSQL_ROOT_PASSWORD: '123456'
-      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
-      MYSQL_DATABASE: 'db2021'
-      MYSQL_USER: 'zzyy'
-      MYSQL_PASSWORD: 'zzyy123'
-    ports:
-       - "3306:3306"
-    volumes:
-       - /app/mysql/db:/var/lib/mysql
-       - /app/mysql/conf/my.cnf:/etc/my.cnf
-       - /app/mysql/init:/docker-entrypoint-initdb.d
+  web:
+	# 使用本地的dockerfile构建镜像
+    build:
+      context: .
+      dockerfile: ./docker-env/django/Dockerfile
+    command: uwsgi --ini config/uwsgi.ini  # 容器启动后启动web服务器
     networks:
-      - atguigu_net
-    command: --default-authentication-plugin=mysql_native_password #解决外部无法访问
-    # 相当于创建 
-networks: 
-   atguigu_net: 
+      - anki_network
+    container_name: web
+    expose:
+      - "80"
+
+
+  nginx: 
+  	# 使用镜像，若本地没有则会拉取镜像
+    image: nginx:stable
+    container_name: nginx
+    ports:
+      - "7777:80"
+    restart: always # always表容器运行发生错误时一直重启
+    volumes:  # 挂载配置和静态文件
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./flashcards/static:/home/static
+    networks:
+      - anki_network
+    # 这个程序的启动依赖于django后端，会在其启动后再开启nginx
+    depends_on:
+      - web
+
+```
+
+> uwsgi.ini文件
+
+```ini
+[uwsgi]
+# variables
+projectname = Anki
+base = /app   # django应用的路径
+
+# configuration
+master = true
+
+pythonpath = %(base)
+chdir = %(base)
+env = DJANGO_SETTINGS_MODULE=%(projectname).settings
+module = %(projectname).wsgi:application
+socket  = 0.0.0.0:80   # uwsgi和nginx之间使用socket通信
+# http  = 0.0.0.0:80
+chmod-socket = 666
+```
+
+> nginx.conf配置
+
+```ini
+worker_processes 1;
+
+events {
+    worker_connections 1024;
+}
+
+# the upstream components nginx needs to connect to
+http{
+    # 下面两行使得CSS加载成功后能够作为一个可执行文件使用
+    include mime.types;
+    default_type application/octet-stream;
+    
+    upstream Anki {
+        server web:80;
+    }
+
+    server {
+        listen 80;
+        server_name  localhost;
+        # 静态文件
+        location /static/ {
+            alias /home/static/;
+        }
+        # 将uwsgi作为动态请求的应用
+         location / {
+            uwsgi_pass Anki;   
+            include /etc/nginx/uwsgi_params;
+   	    }
+    }
+}
 ```
 
 
@@ -252,6 +297,10 @@ networks:
 > 新创建的容器不会创建自己的网卡，配置自己的IP，而是和一个指定的容器共享IP、端口范围等。
 >
 > **由于多个容器用一个IP，所以容器内部的端口不能冲突！！！**
+
+### 查看容器网络IP
+
+使用`docker inspect 容器id| grep "IPAddress"`查看某个容器的虚拟ip
 
 ## 常用安装
 
